@@ -20,7 +20,8 @@ export function createRouteMap (
   const pathMap: Dictionary<RouteRecord> = oldPathMap || Object.create(null)
   // $flow-disable-line
   const nameMap: Dictionary<RouteRecord> = oldNameMap || Object.create(null)
-
+  // 把 routes 中配置的每个路由对象，以及 children 子路由，以及别名路由，都解析成 RouteRecord 对象，
+  // 然后添加到 pathList, pathMap, nameMap（只有定义了 name 属性的命名路由会添加到 nameMap 中） 中
   routes.forEach(route => {
     addRouteRecord(pathList, pathMap, nameMap, route)
   })
@@ -29,7 +30,7 @@ export function createRouteMap (
   for (let i = 0, l = pathList.length; i < l; i++) {
     if (pathList[i] === '*') {
       pathList.push(pathList.splice(i, 1)[0])
-      // 把通配符移到队列尾部，所以需要遍历的结束下标 l 迁移一位，
+      // 把通配符移到队列尾部，所以需要遍历的结束下标 l 右移一位，
       // 因为原先 i 位置上的元素被删掉了，当前 i 位置上是原先 (i + 1) 位置的值，该值还没有判断，所以 i 需要减一
       l--
       i--
@@ -45,6 +46,7 @@ export function createRouteMap (
     if (found.length > 0) {
       const pathNames = found.map(path => `- ${path}`).join('\n')
       warn(false, `Non-nested routes must include a leading slash character. Fix the following routes: \n${pathNames}`)
+      // 除了 children 中的嵌套子路由的 path外，其他 path 都应该以 '/' 开头，通配符 '*' 除外,
     }
   }
 
@@ -60,8 +62,8 @@ function addRouteRecord (
   pathMap: Dictionary<RouteRecord>,
   nameMap: Dictionary<RouteRecord>,
   route: RouteConfig,
-  parent?: RouteRecord,
-  matchAs?: string
+  parent?: RouteRecord, // 处理 children 子路由时，parent 是父级路由对象
+  matchAs?: string // 处理路由别名时，matchAs 是当前 route 对象实际所代表的目标路径 path
 ) {
   // pathList: ['/a/b', '/a/b/c',]，所有 path 组成的数组
   // pathMap: {'/a/b': record, '/a/b/c': record2, }, 以 path 为 key，record为值的 map 对象
@@ -99,6 +101,9 @@ function addRouteRecord (
     meta: route.meta || {},
     // 只有当 route.props 和 route.components 属性同时配置时，该项才取 route.props，
     // 只配置了 route.props 时，该项是 { default: route.props }
+    // 在多视图路由中，route.props 的配置和 route.components 的格式一样，key: value，key是
+    // 视图名，value 是针对该视图的 props 值（boolean | object | function）
+    // 而只有默认视图时，就转成 { default: route.props } 的形式
     props:
       route.props == null
         ? {}
@@ -111,7 +116,8 @@ function addRouteRecord (
     // Warn if route is named, does not redirect and has a default child route.
     // If users navigate to this route by name, the default child will
     // not be rendered (GH Issue #629)
-    // 不允许同时配置 route.name 和 含有默认路由的 route.children，而且同时又没有配置 route.redirect，
+    // 没有指定 redirect 的命名路由，如果存在 path 为 '' 或者 '/' 这样的默认子路由，
+    // 当你想要通过 name 来跳转到该命名路由时，它的这个默认子路由是不会被渲染的
     // path 是 '' 或者 '/' 的是默认路由.
     if (process.env.NODE_ENV !== 'production') {
       if (
@@ -163,7 +169,7 @@ function addRouteRecord (
         path: alias,
         children: route.children
       }
-      // 把 alias 也当作一个 path 添加进 pathList, pathMap, nameMap
+      // 把 alias 也当作一个 path路径对象 添加进 pathList, pathMap, nameMap
       // 注意，alias 的 matchAs 是它对应的 path，当路径匹配到 alias 时，其实会去执行 matchAs 的匹配
       addRouteRecord(
         pathList,
@@ -217,8 +223,9 @@ function normalizePath (
   // 非严格模式下，把 path 末尾的'/' 删掉
   if (!strict) path = path.replace(/\/$/, '')
   // 以 '/' 开头的 path 直接返回
+  // 也就是说，在 children 嵌套子路由中的 path 不能以 '/' 开头，否则将不会和其父 path 拼接成正确的路径
   if (path[0] === '/') return path
   if (parent == null) return path
-  // 如果有 parent，就把 path 拼在 parent.path 的后面
+  // 在构造 children 属性中的子路由时，就会有 parent，就把子路由的 path 拼在 parent.path 的后面
   return cleanPath(`${parent.path}/${path}`)
 }

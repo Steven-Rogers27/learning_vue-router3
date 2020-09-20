@@ -8,6 +8,10 @@ import { extend } from './misc'
 const positionStore = Object.create(null)
 
 export function setupScroll () {
+  // Prevent browser scroll behavior on History popstate
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual'
+  }
   // Fix for #1585 for Firefox
   // Fix for #2195 Add optional third attribute to workaround a bug in safari https://bugs.webkit.org/show_bug.cgi?id=182678
   // Fix for #2774 Support for apps loaded from Windows file shares not mapped to network drives: replaced location.origin with
@@ -25,14 +29,10 @@ export function setupScroll () {
   // 单纯的调用 history.pushState 和 history.popState 是不会触发 popstate 事件的，
   // 只有当当前处于激活状态的 history 项发生变化时才会触发 popstate 事件，比如
   // 点击浏览器的前进、后退，执行 history.back() history.forward()
-  window.addEventListener('popstate', e => {
-    // 保存即将变化的这个 history 状态下的页面滚动位置
-    saveScrollPosition()
-    if (e.state && e.state.key) {
-      // 更新新的 history 状态的 key
-      setStateKey(e.state.key)
-    }
-  })
+   window.addEventListener('popstate', handlePopState)
+  return () => {
+    window.removeEventListener('popstate', handlePopState)
+  }
 }
 
 export function handleScroll (
@@ -91,6 +91,13 @@ export function saveScrollPosition () {
       x: window.pageXOffset,
       y: window.pageYOffset
     }
+  }
+}
+
+function handlePopState (e) {
+  saveScrollPosition()
+  if (e.state && e.state.key) {
+    setStateKey(e.state.key)
   }
 }
 
