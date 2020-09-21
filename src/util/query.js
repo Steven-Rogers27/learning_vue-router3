@@ -9,6 +9,8 @@ const commaRE = /%2C/g
 // fixed encodeURIComponent which is more conformant to RFC3986:
 // - escapes [!'()*]
 // - preserve commas
+// encodeURIComponent 原本是不会转义 A-Za-z0-9 -_~.!'*() 的，这里把 !'*() 也给转义了
+// encodeURIComponent 原本是会转义 , 的，这里把 , 给保留没有转义
 const encode = str =>
   encodeURIComponent(str)
     .replace(encodeReserveRE, encodeReserveReplacer)
