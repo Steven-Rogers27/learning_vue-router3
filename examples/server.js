@@ -2,12 +2,14 @@ const express = require('express')
 const rewrite = require('express-urlrewrite')
 const webpack = require('webpack')
 const webpackDevMiddleware = require('webpack-dev-middleware')
+const webpackHotMiddleware = require('webpack-hot-middleware')
 const WebpackConfig = require('./webpack.config')
+const compiler = webpack(WebpackConfig)
 
 const app = express()
 
 app.use(
-  webpackDevMiddleware(webpack(WebpackConfig), {
+  webpackDevMiddleware(compiler, {
     publicPath: '/__build__/',
     stats: {
       colors: true,
@@ -15,6 +17,8 @@ app.use(
     }
   })
 )
+
+app.use(webpackHotMiddleware(compiler))
 
 const fs = require('fs')
 const path = require('path')

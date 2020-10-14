@@ -122,18 +122,21 @@ export function getHash (): string {
   const index = href.indexOf('#')
   // empty path
   if (index < 0) return ''
-
+  // 拿出第一个 # 后面的部分
   href = href.slice(index + 1)
   // decode the hash but not the search or hash
   // as search(query) is already decoded
   // https://github.com/vuejs/vue-router/issues/2708
   const searchIndex = href.indexOf('?')
   if (searchIndex < 0) {
+    // 没有查询参数时
     const hashIndex = href.indexOf('#')
     if (hashIndex > -1) {
+      // 如果还有 #，只 decode # 号之前的部分
       href = decodeURI(href.slice(0, hashIndex)) + href.slice(hashIndex)
-    } else href = decodeURI(href)
+    } else href = decodeURI(href) // 没有 # 号了就全部 decode
   } else {
+    // 当存在查询参数时，只把 ? 号之前的部分 decode
     href = decodeURI(href.slice(0, searchIndex)) + href.slice(searchIndex)
   }
 

@@ -103,8 +103,12 @@ export default class VueRouter {
       if (index > -1) this.apps.splice(index, 1)
       // ensure we still have a main app or null if no apps
       // we do not release the router so it can be reused
+      // 如果是当前正处于激活状态的（this.app 所指向的vm）被销毁了，
+      // 路由就切换到 this.apps 中的第一个，如果 this.apps 数组空了，
+      // 则 this.app 为 null
       if (this.app === app) this.app = this.apps[0] || null
-
+      // this.app 为 null 时全部路由实例都已销毁，整个 this.history 对象
+      // 也进行清理
       if (!this.app) this.history.teardown()
     })
 

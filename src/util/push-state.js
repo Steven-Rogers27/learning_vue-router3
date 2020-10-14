@@ -4,7 +4,12 @@ import { inBrowser } from './dom'
 import { saveScrollPosition } from './scroll'
 import { genStateKey, setStateKey, getStateKey } from './state-key'
 import { extend } from './misc'
-
+/**
+ * 1.必须是浏览器环境：存在 window 对象
+ * 2.当 userAgent 是 Android 2/4 且是 Mobile Safari 且不是 Chrome 和 Windows Phone 时，
+ *  不支持 pushState
+ * 3.此外，如果存在 history.pushState 函数，则支持
+ */
 export const supportsPushState =
   inBrowser &&
   (function () {

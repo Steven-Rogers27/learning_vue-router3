@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const VuePlugin = require('vue-loader/lib/plugin')
+const webpack = require('webpack')
 
 module.exports = {
   // Expose __dirname to allow automatically setting basename.
@@ -15,7 +16,7 @@ module.exports = {
     const fullDir = path.join(__dirname, dir)
     const entry = path.join(fullDir, 'app.js')
     if (fs.statSync(fullDir).isDirectory() && fs.existsSync(entry)) {
-      entries[dir] = ['es6-promise/auto', entry]
+      entries[dir] = ['es6-promise/auto', 'webpack-hot-middleware/client', entry]
     }
 
     return entries
@@ -65,5 +66,8 @@ module.exports = {
     }
   },
 
-  plugins: [new VuePlugin()]
+  plugins: [
+    new VuePlugin(),
+    new webpack.HotModuleReplacementPlugin()
+  ]
 }
