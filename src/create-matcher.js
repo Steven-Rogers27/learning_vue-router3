@@ -87,7 +87,11 @@ export function createMatcher (
     // no match
     return _createRoute(null, location)
   }
-
+  /**
+   * 从 location 重定向到 record.redirect 所指定的路由，返回这个重定向后的 Route 对象
+   * @param {*} record 和 location 匹配的 RouteRecord 对象
+   * @param {*} location 
+   */
   function redirect (
     record: RouteRecord,
     location: Location
@@ -100,6 +104,7 @@ export function createMatcher (
       ? originalRedirect(createRoute(record, location, null, router))
       : originalRedirect
 
+
     if (typeof redirect === 'string') {
       redirect = { path: redirect }
     }
@@ -110,15 +115,17 @@ export function createMatcher (
           false, `invalid redirect option: ${JSON.stringify(redirect)}`
         )
       }
-      // redirect 无效时，返回一个没有匹配任何 RouteRecord 对象的 Route 对象
+      // redirect 无效时，从 location 重定向到 record.redirect 就失败，
+      // 返回的依然是 location 对应的 Route 对象
       return _createRoute(null, location)
     }
 
     const re: Object = redirect
     const { name, path } = re
     let { query, hash, params } = location
-    // query, hash, params 优先用 redirect（Location对象）中的值，
-    // 没有的话再用 location 中的
+    // 如果 redirect 本身定义了 query, hash, params 这些值（用户配置的 redirect 函数
+    // 所返回的 location 对象中指定了），就用 redirect 的。如果没有，就沿用 location
+    // 的
     query = re.hasOwnProperty('query') ? re.query : query
     hash = re.hasOwnProperty('hash') ? re.hash : hash
     params = re.hasOwnProperty('params') ? re.params : params
@@ -127,8 +134,10 @@ export function createMatcher (
       // resolved named direct
       const targetRecord = nameMap[name]
       if (process.env.NODE_ENV !== 'production') {
+        // 要重定向到的目标路由没有匹配的 RouteRecord 时，给出警告
         assert(targetRecord, `redirect failed: named route "${name}" not found.`)
       }
+      // 生成由 location 重定向到 name 所对应的 Route 对象
       return match({
         _normalized: true,
         name,
@@ -138,10 +147,15 @@ export function createMatcher (
       }, undefined, location)
     } else if (path) {
       // 1. resolve relative redirect
+      // 把 redirect.path 拼在 record.parent 的 path 后，如果 record.parent 不存在，
+      // 则拼在 '/' 后，可见，重定向的 path 是相对于当前 record (当前 location 所匹配的
+      // RouteRecord 对象) 的父级路径而构建的
       const rawPath = resolveRecordPath(path, record)
       // 2. resolve params
+      // 把 redirect 的 params 填充进最终目标路径
       const resolvedPath = fillParams(rawPath, params, `redirect route with path "${rawPath}"`)
       // 3. rematch with existing query and hash
+      // 生成由 location 重定向到 path 所对应的 Route 对象
       return match({
         _normalized: true,
         path: resolvedPath,
@@ -152,26 +166,36 @@ export function createMatcher (
       if (process.env.NODE_ENV !== 'production') {
         warn(false, `invalid redirect option: ${JSON.stringify(redirect)}`)
       }
+      // redirect.name 和 redirect.path 都没有时，重定向失败，还是返回 location
+      // 所对应的 Route 对象
       return _createRoute(null, location)
     }
   }
-
+  /**
+   * 
+   * @param {*} record location 所匹配的 RouteRecord 对象
+   * @param {*} location 
+   * @param {*} matchAs 实际要路由到的路径字符串
+   */
   function alias (
     record: RouteRecord,
     location: Location,
     matchAs: string
   ): Route {
     const aliasedPath = fillParams(matchAs, location.params, `aliased route with path "${matchAs}"`)
+    // 拿到 aliasedPath 所对应的 Route 对象
     const aliasedMatch = match({
       _normalized: true,
       path: aliasedPath
     })
     if (aliasedMatch) {
       const matched = aliasedMatch.matched
+      // 拿到 aliasedPath 所对应的 RouteRecord 对象
       const aliasedRecord = matched[matched.length - 1]
       location.params = aliasedMatch.params
       return _createRoute(aliasedRecord, location)
     }
+    // 当没有 aliasedPath 对应的 Route 时，返回由 location 生成的 Route
     return _createRoute(null, location)
   }
   /**
