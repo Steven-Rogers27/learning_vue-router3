@@ -27,7 +27,8 @@ export function createRoute (
   try {
     query = clone(query)
   } catch (e) {}
-
+  // 即便当传入的 record 参数为null时，只不过生成的route对象的
+  // meta, matched 字段为空，name字段也可能为空
   const route: Route = {
     name: location.name || (record && record.name),
     meta: (record && record.meta) || {},
@@ -36,7 +37,9 @@ export function createRoute (
     query,
     params: location.params || {},
     fullPath: getFullPath(location, stringifyQuery),
-    matched: record ? formatMatch(record) : []
+    // 给新生成的这个 route 对象关联其所匹配的 RouteRecord 对象及其父级 RouteRecord
+    // matched 数组的末尾是当前 route 所匹配的 RouteRecord，数组前面的项是该 RouteRecord 的父节点
+    matched: record ? formatMatch(record) : [] 
   }
   if (redirectedFrom) {
     route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery)
@@ -66,6 +69,7 @@ export const START = createRoute(null, {
 
 function formatMatch (record: ?RouteRecord): Array<RouteRecord> {
   // 把 record 及其父级record 全部扁平化成一个数组，每次都从头部插入
+  // res 中的 record 顺序是由父到子
   const res = []
   while (record) {
     res.unshift(record)
