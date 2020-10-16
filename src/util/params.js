@@ -22,7 +22,8 @@ export function fillParams (
     // Fix #2505 resolving asterisk routes { name: 'not-found', params: { pathMatch: '/not-found' }}
     // and fix #3106 so that you can work with location descriptor object having params.pathMatch equal to empty string
     if (typeof params.pathMatch === 'string') params[0] = params.pathMatch
-
+    // Regexp.compile(path)返回一个函数，假如 path 的形式是 '/user/:id'，
+    // params是{ id: 123 }，则filter返回 '/user/123'
     return filler(params, { pretty: true })
   } catch (e) {
     if (process.env.NODE_ENV !== 'production') {

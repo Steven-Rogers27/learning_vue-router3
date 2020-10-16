@@ -1,5 +1,10 @@
 /* @flow */
-
+/**
+ * 把 relative 拼在 base 后面形成一个path，返回
+ * @param {*} relative 
+ * @param {*} base 
+ * @param {*} append 
+ */
 export function resolvePath (
   relative: string,
   base: string,
@@ -27,9 +32,12 @@ export function resolvePath (
   const segments = relative.replace(/^\//, '').split('/')
   for (let i = 0; i < segments.length; i++) {
     const segment = segments[i]
+    // 如果 relative 中存在 '..' 路径就往上一级跳一级，
+    // 所以从 stack 末尾弹出一段
     if (segment === '..') {
       stack.pop()
     } else if (segment !== '.') {
+      // 把 relative 中的路径段拼在base的路径段后面
       stack.push(segment)
     }
   }
@@ -41,7 +49,15 @@ export function resolvePath (
 
   return stack.join('/')
 }
-
+/**
+ * 把形如 '/this/is/a/path?para1=123#hash' 这样的 path，拆成
+ * {
+ *  path: '/this/is/a/path',
+ *  query: 'para1=123',
+ *  hash: 'hash'
+ * }
+ * @param {*} path 
+ */
 export function parsePath (path: string): {
   path: string;
   query: string;

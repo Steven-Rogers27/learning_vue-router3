@@ -17,7 +17,19 @@ const encode = str =>
     .replace(commaRE, ',')
 
 const decode = decodeURIComponent
-
+/**
+ * 把 query 字符串解析成形如
+ * {
+ *  key1: 'value1',
+ *  key2: ['p1=p2', 'value2'],
+ *  key3: 'a b',
+ * }
+ * 这样的对象，并把 extraQuery 中的属性合并进去，同名属性，extraQuery
+ * 会覆盖query中的值
+ * @param {*} query 
+ * @param {*} extraQuery 
+ * @param {*} _parseQuery 
+ */
 export function resolveQuery (
   query: ?string,
   extraQuery: Dictionary<string> = {},
@@ -31,6 +43,7 @@ export function resolveQuery (
     process.env.NODE_ENV !== 'production' && warn(false, e.message)
     parsedQuery = {}
   }
+  // 如果 extraQuery 中有和 query 中同名的key，则会覆盖 query 中的值
   for (const key in extraQuery) {
     const value = extraQuery[key]
     parsedQuery[key] = Array.isArray(value)
@@ -41,7 +54,19 @@ export function resolveQuery (
 }
 
 const castQueryParamValue = value => (value == null || typeof value === 'object' ? value : String(value))
-
+/**
+ * 把 '?key1=value1&key2=p1=p2&key3=a+b&key2=value2' 
+ *  '#key1=value1&key2=p1=p2&key3=a+b&key2=value2'
+ *  '&key1=value1&key2=p1=p2&key3=a+b&key2=value2' 
+ * 这样的 query
+ * 解析成
+ * {
+ *  key1: 'value1',
+ *  key2: ['p1=p2', 'value2'],
+ *  key3: 'a b',
+ * }
+ * @param {*} query 
+ */
 function parseQuery (query: string): Dictionary<string> {
   const res = {}
 

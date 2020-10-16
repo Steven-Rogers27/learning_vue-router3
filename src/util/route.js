@@ -4,7 +4,16 @@ import type VueRouter from '../index'
 import { stringifyQuery } from './query'
 
 const trailingSlashRE = /\/?$/
-
+/**
+ * 由 RouteRecord 和 Location 生成 Route 对象
+ * RouteRecord 是由路由配置生成的，相当于元数据，
+ * 而 Location 是实际参数值，它俩结合生成的 Route 对象
+ * 等于是针对参数 Location 对象特有的对象
+ * @param {*} record 
+ * @param {*} location 
+ * @param {*} redirectedFrom 
+ * @param {*} router 
+ */
 export function createRoute (
   record: ?RouteRecord,
   location: Location,

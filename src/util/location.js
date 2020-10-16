@@ -6,7 +6,13 @@ import { resolveQuery } from './query'
 import { fillParams } from './params'
 import { warn } from './warn'
 import { extend } from './misc'
-
+/**
+ * 在 current 的基础上，把 raw 参数合并进去
+ * @param {*} raw 
+ * @param {*} current 
+ * @param {*} append 
+ * @param {*} router 
+ */
 export function normalizeLocation (
   raw: RawLocation,
   current: ?Route,
@@ -18,8 +24,10 @@ export function normalizeLocation (
   if (next._normalized) {
     return next
   } else if (next.name) {
+    // 浅拷贝一份raw给next
     next = extend({}, raw)
     const params = next.params
+    // 此时params还指向原始raw上的params对象
     if (params && typeof params === 'object') {
       next.params = extend({}, params)
     }
@@ -30,6 +38,8 @@ export function normalizeLocation (
   if (!next.path && next.params && current) {
     next = extend({}, next)
     next._normalized = true
+    // 用next.params(也就是raw.params)上的属性和current.params的属性合并，
+    // 相同属性名的next.params会覆盖current.params，但不影响current.params本身
     const params: any = extend(extend({}, current.params), next.params)
     if (current.name) {
       next.name = current.name

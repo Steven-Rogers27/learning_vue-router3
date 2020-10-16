@@ -132,11 +132,14 @@ export function getHash (): string {
     // 没有查询参数时
     const hashIndex = href.indexOf('#')
     if (hashIndex > -1) {
-      // 如果还有 #，只 decode # 号之前的部分
+      // 如果还有 #，只 decode # 号之前的部分，因为在../util/query.js 中的parseQuery方法中，还会对
+      // #号后的参数做decode
       href = decodeURI(href.slice(0, hashIndex)) + href.slice(hashIndex)
     } else href = decodeURI(href) // 没有 # 号了就全部 decode
   } else {
-    // 当存在查询参数时，只把 ? 号之前的部分 decode
+    // 当存在查询参数时，只把 ? 号之前的部分 decode，
+    // ?号后面的query参数不decode，因为在 ../util/query.js 中的parseQuery方法中，还会对
+    // ?号后的参数做decode
     href = decodeURI(href.slice(0, searchIndex)) + href.slice(searchIndex)
   }
 

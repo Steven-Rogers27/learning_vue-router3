@@ -37,6 +37,8 @@ export function createMatcher (
         warn(record, `Route with name '${name}' does not exist`)
       }
       if (!record) return _createRoute(null, location)
+      // record所对应的path中的变量参数，例如 '/users/:id'，
+      // keys就是诸如[{name: 'id', prefix: '/', suffix: ''}]
       const paramNames = record.regex.keys
         .filter(key => !key.optional)
         .map(key => key.name)
@@ -47,6 +49,8 @@ export function createMatcher (
 
       if (currentRoute && typeof currentRoute.params === 'object') {
         for (const key in currentRoute.params) {
+          // 把路径参数中，currentRoute 中有，而新的 location 还没有的
+          // 参数，复制到 location.params 中
           if (!(key in location.params) && paramNames.indexOf(key) > -1) {
             location.params[key] = currentRoute.params[key]
           }
