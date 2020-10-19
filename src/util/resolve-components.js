@@ -10,7 +10,14 @@ export function resolveAsyncComponents (matched: Array<RouteRecord>): Function {
     let pending = 0
     let error = null
 
-    flatMapComponents(matched, (def, _, match, key) => {
+    flatMapComponents(matched, 
+      /**
+       * def: vue 组件配置, matched 数组中的某个 RouteRecord 的 components 中的一个
+       * _: vue 组件实例，matched 数组中的某个 RouteRecord 的 instances 中的一个
+       * match: matched 数组中的某个 RouteRecord 对象
+       * key: RouteRecord 对象的 components 属性中的 key
+       */
+      (def, _, match, key) => {
       // if it's a function and doesn't have cid attached,
       // assume it's an async component resolve function.
       // we are not using Vue's default async resolving mechanism because
