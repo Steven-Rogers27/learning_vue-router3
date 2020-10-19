@@ -28,6 +28,7 @@ export const supportsPushState =
   })()
 
 export function pushState (url?: string, replace?: boolean) {
+  // 用全局变量 state-key（_key）的当前值记录页面当前的滚动位置
   saveScrollPosition()
   // try...catch the pushState call to get around Safari
   // DOM Exception 18 where it limits to 100 pushState calls
@@ -36,9 +37,13 @@ export function pushState (url?: string, replace?: boolean) {
     if (replace) {
       // preserve existing history state as it could be overriden by the user
       const stateCopy = extend({}, history.state)
+      // 拿全局变量 state-key（_key）的当前值继续作为接下来 history 项的 key
+      // 因为这是 replaceState，上一个 history 项是被接下来的 history 给顶替掉的
+      // 所以继续使用上一个 history 项所使用的 state-key
       stateCopy.key = getStateKey()
       history.replaceState(stateCopy, '', url)
     } else {
+      // 以当前时刻毫秒值作为 state-key，并更新全局的 state-key（_key）
       history.pushState({ key: setStateKey(genStateKey()) }, '', url)
     }
   } catch (e) {

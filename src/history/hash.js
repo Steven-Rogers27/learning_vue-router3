@@ -85,7 +85,10 @@ export class HashHistory extends History {
   go (n: number) {
     window.history.go(n)
   }
-
+  /**
+   * 以 pushState 或者 replaceState 的方式做 url 跳转
+   * @param {*} push 
+   */
   ensureURL (push?: boolean) {
     const current = this.current.fullPath
     if (getHash() !== current) {
@@ -145,7 +148,11 @@ export function getHash (): string {
 
   return href
 }
-
+/**
+ * 从 window.location.href 中取出 '#' 之前的部分作为 url 的公共前缀 base，
+ * 后面再拼上新传入的 path 作为新的 hash 路径
+ * @param {*} path 
+ */
 function getUrl (path) {
   const href = window.location.href
   const i = href.indexOf('#')
@@ -157,6 +164,7 @@ function pushHash (path) {
   if (supportsPushState) {
     pushState(getUrl(path))
   } else {
+    // 当环境不支持 window.history.pushState() 时
     window.location.hash = path
   }
 }
@@ -165,6 +173,7 @@ function replaceHash (path) {
   if (supportsPushState) {
     replaceState(getUrl(path))
   } else {
+    // 当环境不支持 window.history.pushState() 时
     window.location.replace(getUrl(path))
   }
 }

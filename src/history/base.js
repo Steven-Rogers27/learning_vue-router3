@@ -156,12 +156,18 @@ export class History {
       }
       onAbort && onAbort(err)
     }
+    // 拿到即将要跳转到的新 Route 对象所匹配的 RouteRecord 对象
     const lastRouteIndex = route.matched.length - 1
+    // 拿到当前 this.current 所匹配的 RouteRecord 对象
     const lastCurrentIndex = current.matched.length - 1
     if (
+      // 1.先比较 route 和 current 是否相同，如果相同则
       isSameRoute(route, current) &&
       // in the case the route map has been dynamically appended to
+      // 2.再比较 route 和 current 各自所匹配的 RouteRecord 是否在同一层级，
+      //    如果在同一层级则
       lastRouteIndex === lastCurrentIndex &&
+      // 3.再比较这俩 RouteRecord 是否是同一个
       route.matched[lastRouteIndex] === current.matched[lastCurrentIndex]
     ) {
       this.ensureURL()
@@ -175,10 +181,14 @@ export class History {
 
     const queue: Array<?NavigationGuard> = [].concat(
       // in-component leave guards
+      // 从将要去激活的路由配置中按照从子 RouteRecord 到父 RouteRecord 的顺序
+      // 返回这些去激活的组件中的 beforeRouteLeave 导航守卫函数
       extractLeaveGuards(deactivated),
       // global before hooks
       this.router.beforeHooks,
       // in-component update hooks
+      // 从只需要更细而不需要去激活的路由配置中，按照从父 RouteRecord 到子 RouteRecord 的
+      // 顺序，返回这些组件中的 beforeRouteUpdate 导航守卫函数
       extractUpdateHooks(updated),
       // in-config enter guards
       activated.map(m => m.beforeEnter),
@@ -305,20 +315,38 @@ function resolveQueue (
       break
     }
   }
+  // 1.在 current 和 next 的相同 RouteRecord 之前的部分是路由变化前后所共用的路由配置，
+  // 所以处于 updated，
+  // 2.next 中的剩下部分是此次路由变化后不同于 current 的而且是即将被激活的路由配置
+  // 3.current 中的剩下部分是不用于 next 的，将要被去激活的路由配置
   return {
     updated: next.slice(0, i),
     activated: next.slice(i),
     deactivated: current.slice(i)
   }
 }
-
+/**
+ * 从具有父子关系的一组 RouteRecords 中，再从每个 RouteRecord 所关联的 vue 组件配置中
+ * 提取出组件内的导航守卫函数，不过这里是经过闭包封装过的函数
+ * @param {*} records 
+ * @param {*} name 
+ * @param {*} bind 
+ * @param {*} reverse 
+ */
 function extractGuards (
   records: Array<RouteRecord>,
   name: string,
   bind: Function,
   reverse?: boolean
 ): Array<?Function> {
-  const guards = flatMapComponents(records, (def, instance, match, key) => {
+  const guards = flatMapComponents(records, 
+    /**
+     * def: RouteRecord 中 components 对象中的 value，也就是每个路由配置所关联的vue组件配置
+     * instance: RouteRecord 中 intances 对象中保存的 vue 组件实例
+     * match: RouteRecord 对象本身
+     * key: RouteRecord 中 components 对象中的 key
+     */
+    (def, instance, match, key) => {
     const guard = extractGuard(def, name)
     if (guard) {
       return Array.isArray(guard)
@@ -328,26 +356,46 @@ function extractGuards (
   })
   return flatten(reverse ? guards.reverse() : guards)
 }
-
+/**
+ * 从 vue 组件实例中提取组件内的导航守卫
+ * @param {*} def 路由配置中 components 对象中配置的，和每个路由配置相关联的 vue 组件配置
+ * @param {*} key 'beforeRouteLeave', 'beforeRouteUpdate', 'beforeRouteEnter'
+ *                这样的组件内的导航守卫名称
+ */
 function extractGuard (
   def: Object | Function,
   key: string
 ): NavigationGuard | Array<NavigationGuard> {
   if (typeof def !== 'function') {
     // extend now so that global mixins are applied.
+    // _Vue 是 install.js 中的全局Vue对象，经过全局继承后，
+    // 就在处理后的 def（vue 组件实例）中拥有了 install.js 中
+    // 全局混入的 beforeCreate() 和 destroyed()
     def = _Vue.extend(def)
   }
   return def.options[key]
 }
-
+/**
+ * 从 deactivated 这些 RouteRecords 中提取出它们各自所关联的 vue 组件配置中所定义的
+ * beforeRouteLeave 导航函数，并且是按照从子 RouteRecord 到父 RouteRecord 的顺序返回 
+ * @param {*} deactivated 
+ */
 function extractLeaveGuards (deactivated: Array<RouteRecord>): Array<?Function> {
   return extractGuards(deactivated, 'beforeRouteLeave', bindGuard, true)
 }
-
+/**
+ * 从 updated 这些 RouteRecords 中提取出它们各自所关联的 vue 组件配置中所定义的
+ * beforeRouteUpdate 导航函数，并且是按照从父 RouteRecord 到子 RouteRecord 的顺序返回
+ * @param {*} updated 
+ */
 function extractUpdateHooks (updated: Array<RouteRecord>): Array<?Function> {
   return extractGuards(updated, 'beforeRouteUpdate', bindGuard)
 }
-
+/**
+ * 
+ * @param {*} guard vue 组件内的导航守卫函数
+ * @param {*} instance vue 组件实例
+ */
 function bindGuard (guard: NavigationGuard, instance: ?_Vue): ?NavigationGuard {
   if (instance) {
     return function boundRouteGuard () {

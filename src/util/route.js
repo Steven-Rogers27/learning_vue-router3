@@ -86,7 +86,14 @@ function getFullPath (
   const stringify = _stringifyQuery || stringifyQuery // 把 query 对象处理成 '?key=val&key2=val2' 的字符串格式.
   return (path || '/') + stringify(query) + hash
 }
-
+/**
+ * 比较 a 和 b 两个 Route 对象是否相同
+ * 1.如果 a 和 b 都有 path，优先比较 path, hash, query, 否则
+ * 2.如果 a 和 b 都有 name，比较 name, hash, query，否则
+ * 不相等
+ * @param {*} a 
+ * @param {*} b 
+ */
 export function isSameRoute (a: Route, b: ?Route): boolean {
   if (b === START) {
     return a === b

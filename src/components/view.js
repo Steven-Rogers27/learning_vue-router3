@@ -75,6 +75,7 @@ export default {
         (val && current !== vm) ||
         (!val && current === vm)
       ) {
+        // 在 RouteRecord 的 instances 属性中保存当前渲染的 vue 组件实例
         matched.instances[name] = val
       }
     }
